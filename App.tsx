@@ -86,10 +86,13 @@ function App() {
         
         // Handle short links (shp.ee or s.shopee.vn)
         // For short links, we CANNOT convert to universal-link structure because we don't know the product ID.
-        // We simply append the UTM source.
+        // We simply append the UTM source and content.
         if (isShortLink) {
            const separator = urlInput.includes('?') ? '&' : '?';
            affiliateUrl = `${urlInput}${separator}utm_source=${settings.affiliateId}`;
+           if (settings.subId) {
+             affiliateUrl += `&utm_content=${settings.subId}`;
+           }
         } else {
            // Standard shopee.vn link (long form) -> Convert to Universal Link
            const path = urlObj.pathname;
