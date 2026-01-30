@@ -16,6 +16,21 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
   useEffect(() => {
     let isMounted = true;
     const processLink = async () => {
+      // Check if the URL is already a Shopee short link.
+      // If it is, do NOT shorten it again with TinyURL.
+      // Double redirection (TinyURL -> vn.shp.ee -> Shopee App) often breaks Deep Linking on mobile.
+      const isShopeeShortLink = result.affiliateUrl.includes('shp.ee') || 
+                                result.affiliateUrl.includes('vn.shp.ee') || 
+                                result.affiliateUrl.includes('s.shopee.vn');
+
+      if (isShopeeShortLink) {
+        if (isMounted) {
+          setDisplayUrl(result.affiliateUrl);
+          setIsShortening(false);
+        }
+        return;
+      }
+
       setIsShortening(true);
       setDisplayUrl('');
       

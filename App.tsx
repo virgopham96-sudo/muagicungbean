@@ -70,7 +70,7 @@ function App() {
     }
     // Check for valid shopee domains including s.shopee.vn
     if (!urlInput.includes('shopee') && !urlInput.includes('shp.ee')) {
-      setError('Link không hợp lệ. Vui lòng nhập link Shopee (shopee.vn, s.shopee.vn hoặc shp.ee)');
+      setError('Link không hợp lệ. Vui lòng nhập link Shopee (shopee.vn, s.shopee.vn, vn.shp.ee hoặc shp.ee)');
       return;
     }
 
