@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, ExternalLink, RefreshCw, Link as LinkIcon } from 'lucide-react';
+import { Copy, Check, ExternalLink, RefreshCw, Share2 } from 'lucide-react';
 import { ConvertedLink } from '../types';
 import { shortenUrl } from '../services/shortenerService';
 
@@ -12,13 +12,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
   const [displayUrl, setDisplayUrl] = useState<string>('');
   const [isShortening, setIsShortening] = useState(false);
 
-  // Automatically shorten link when result changes
   useEffect(() => {
     let isMounted = true;
     const processLink = async () => {
-      // Check if the URL is already a Shopee short link.
-      // If it is, do NOT shorten it again with TinyURL.
-      // Double redirection (TinyURL -> vn.shp.ee -> Shopee App) often breaks Deep Linking on mobile.
       const isShopeeShortLink = result.affiliateUrl.includes('shp.ee') || 
                                 result.affiliateUrl.includes('vn.shp.ee') || 
                                 result.affiliateUrl.includes('s.shopee.vn');
@@ -58,51 +54,60 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-slide-up">
-      {/* Header */}
-      <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-          <LinkIcon className="w-3 h-3" /> Link Rút Gọn
-        </span>
-        <span className="text-xs text-gray-400">{new Date(result.timestamp).toLocaleTimeString()}</span>
-      </div>
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Link mua hàng Shopee',
+          url: displayUrl
+        });
+      } catch (e) {
+        handleCopy();
+      }
+    } else {
+      handleCopy();
+    }
+  };
 
-      {/* Main Link Area */}
-      <div className="p-6">
-        <div className="mb-2">
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            <div className="flex-1 w-full relative">
-              <input
-                readOnly
-                value={isShortening ? 'Đang tạo link rút gọn...' : displayUrl}
-                className={`w-full border-2 rounded-lg px-4 py-3 pr-12 font-mono text-base font-semibold focus:outline-none shadow-sm transition-colors ${
-                  isShortening 
-                    ? 'bg-gray-50 text-gray-400 border-gray-100 italic' 
-                    : 'bg-white text-shopee border-shopee/20'
-                }`}
-              />
-              {!isShortening && displayUrl && (
-                <a 
-                  href={displayUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-shopee hover:text-shopee-dark"
-                  title="Mở link"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
-            </div>
+  return (
+    <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
+      <div className="p-8">
+        <div className="flex flex-col gap-5">
+          {/* Main Short Link Display */}
+          <div className="relative">
+            <input
+              readOnly
+              value={isShortening ? 'Đang tạo link rút gọn...' : displayUrl}
+              className={`w-full bg-gray-50 border-2 rounded-2xl px-6 py-5 pr-14 font-mono text-base font-bold focus:outline-none transition-all ${
+                isShortening 
+                  ? 'text-gray-400 border-gray-100 italic' 
+                  : 'text-shopee border-shopee/10 bg-shopee/[0.02]'
+              }`}
+            />
+            {!isShortening && displayUrl && (
+              <a 
+                href={displayUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-shopee p-1.5 rounded-xl hover:bg-shopee/10 transition-colors"
+                title="Mở link thử"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-4">
             <button
               onClick={handleCopy}
               disabled={isShortening}
-              className={`w-full sm:w-auto px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-md ${
+              className={`px-6 py-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${
                 copied 
-                  ? 'bg-green-500 text-white shadow-green-200' 
+                  ? 'bg-green-500 text-white shadow-green-100' 
                   : isShortening
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-shopee text-white hover:bg-shopee-dark shadow-orange-200'
+                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
+                    : 'bg-shopee text-white hover:shadow-orange-200 hover:brightness-105'
               }`}
             >
               {isShortening ? (
@@ -112,7 +117,16 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
               ) : (
                 <Copy className="w-5 h-5" />
               )}
-              {copied ? 'Đã Copy' : 'Copy Link'}
+              {copied ? 'ĐÃ COPY' : 'COPY LINK'}
+            </button>
+
+            <button
+              onClick={handleShare}
+              disabled={isShortening}
+              className="px-6 py-5 bg-gray-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md shadow-gray-200 disabled:opacity-50"
+            >
+              <Share2 className="w-5 h-5" />
+              CHIA SẺ
             </button>
           </div>
         </div>

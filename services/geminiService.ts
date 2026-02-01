@@ -1,21 +1,14 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Platform, MarketingContent } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-
-// Initialize Gemini Client
-// Note: In a production environment, API calls should be proxied through a backend to protect the key.
-// For this frontend-only demo, we assume the environment variable is injected safely.
-const ai = new GoogleGenAI({ apiKey });
+// Initialize Gemini Client using named parameter and process.env.API_KEY directly
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateMarketingCopy = async (
   productUrl: string,
   platform: Platform
 ): Promise<MarketingContent> => {
-  if (!apiKey) {
-    throw new Error("API Key is missing.");
-  }
-
   // Extract a potential product name from the slug to help the AI context
   // e.g., shopee.vn/Ao-thun-nam-dep-i.123.456 -> "Ao thun nam dep"
   let contextHint = "Unknown Product";
@@ -46,6 +39,7 @@ export const generateMarketingCopy = async (
   `;
 
   try {
+    // Calling generateContent directly with the model and prompt as per guidelines
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -69,6 +63,7 @@ export const generateMarketingCopy = async (
       }
     });
 
+    // Directly access the .text property of GenerateContentResponse
     const text = response.text;
     if (!text) {
       throw new Error("No response from Gemini");

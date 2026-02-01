@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Link as LinkIcon, ShoppingBag, Zap } from 'lucide-react';
+import { Link as LinkIcon, ShoppingBag, Zap, Info } from 'lucide-react';
 import { ResultCard } from './components/ResultCard';
 import { UserSettings, ConvertedLink } from './types';
 
 // Constants
-// Hardcoded settings as requested by the user
 const DEFAULT_SETTINGS: UserSettings = {
   affiliateId: '17362210029',
-  subId: 'Web Tool',
+  subId: 'WebTool',
   universalLinkEnabled: true,
 };
 
@@ -15,38 +14,21 @@ const DEFAULT_SETTINGS: UserSettings = {
 const extractProductName = (url: string): string => {
   try {
     const urlObj = new URL(url);
-    // Check for short link domains
     if (urlObj.hostname.includes('shp.ee') || urlObj.hostname.includes('s.shopee.vn')) {
-      return 'Sản phẩm Shopee (Link rút gọn)';
+      return 'Sản phẩm từ Link rút gọn';
     }
-
-    // Typical Shopee URL: https://shopee.vn/Ten-San-Pham-i.123.456
     const pathname = urlObj.pathname;
-    
-    // Attempt to find the slug part
-    // 1. Remove universal-link prefix if present
-    // 2. Remove leading slash
     let slug = pathname.replace('/universal-link', '');
     if (slug.startsWith('/')) slug = slug.substring(1);
-
-    // If empty or root, return generic
     if (!slug) return 'Trang chủ Shopee';
-
-    // Usually the slug ends with -i.shopId.productId
-    // We split by -i. to get the name part
     if (slug.includes('-i.')) {
       slug = slug.split('-i.')[0];
     } else {
-      // Sometimes it might just be the last segment if structure differs
       const parts = slug.split('/');
       slug = parts[parts.length - 1];
     }
-
-    // Format: Replace hyphens with spaces and capitalize first letter
     const formattedName = slug.replace(/-/g, ' ').trim();
-    if (!formattedName) return 'Sản phẩm Shopee';
-    
-    return formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
+    return formattedName ? formattedName.charAt(0).toUpperCase() + formattedName.slice(1) : 'Sản phẩm Shopee';
   } catch (e) {
     return 'Link Shopee';
   }
@@ -54,108 +36,96 @@ const extractProductName = (url: string): string => {
 
 function App() {
   const [urlInput, setUrlInput] = useState('');
-  // Use constant settings directly since configuration UI is removed
-  const settings = DEFAULT_SETTINGS;
-  
   const [currentResult, setCurrentResult] = useState<ConvertedLink | null>(null);
   const [error, setError] = useState('');
 
   const convertLink = () => {
     setError('');
+    const input = urlInput.trim();
     
-    // Basic validation
-    if (!urlInput.trim()) {
+    if (!input) {
       setError('Vui lòng nhập link Shopee');
       return;
     }
-    // Check for valid shopee domains including s.shopee.vn
-    if (!urlInput.includes('shopee') && !urlInput.includes('shp.ee')) {
-      setError('Link không hợp lệ. Vui lòng nhập link Shopee (shopee.vn, s.shopee.vn, vn.shp.ee hoặc shp.ee)');
+    
+    if (!input.includes('shopee') && !input.includes('shp.ee')) {
+      setError('Link không hợp lệ. Hãy dán link từ shopee.vn hoặc vn.shp.ee');
       return;
     }
 
-    // --- CONVERSION LOGIC ---
-    let affiliateUrl = '';
-    const isShortLink = urlInput.includes('shp.ee') || urlInput.includes('s.shopee.vn');
-
-    if (settings.universalLinkEnabled) {
-      // Construction for Universal Link (Deep Link) pattern
+    try {
+      let affiliateUrl = '';
+      const isShortLink = input.includes('shp.ee') || input.includes('s.shopee.vn');
       
-      try {
-        const urlObj = new URL(urlInput);
+      // Standardize Affiliate ID (ensure an_ prefix for tracking)
+      const cleanId = DEFAULT_SETTINGS.affiliateId.startsWith('an_') 
+        ? DEFAULT_SETTINGS.affiliateId 
+        : `an_${DEFAULT_SETTINGS.affiliateId}`;
+
+      const params = new URLSearchParams();
+      params.append('utm_source', cleanId);
+      params.append('utm_medium', 'affiliates');
+      params.append('utm_campaign', '-');
+      if (DEFAULT_SETTINGS.subId) params.append('utm_content', DEFAULT_SETTINGS.subId);
+      params.append('deep_and_deferred', '1');
+
+      if (isShortLink) {
+        const separator = input.includes('?') ? '&' : '?';
+        affiliateUrl = `${input}${separator}${params.toString()}`;
+      } else {
+        const urlObj = new URL(input);
+        const path = urlObj.pathname.startsWith('/universal-link') 
+          ? urlObj.pathname.replace('/universal-link', '') 
+          : urlObj.pathname;
         
-        // Handle short links (shp.ee or s.shopee.vn)
-        // For short links, we CANNOT convert to universal-link structure because we don't know the product ID.
-        // We simply append the UTM source and content.
-        if (isShortLink) {
-           const separator = urlInput.includes('?') ? '&' : '?';
-           affiliateUrl = `${urlInput}${separator}utm_source=${settings.affiliateId}`;
-           if (settings.subId) {
-             affiliateUrl += `&utm_content=${settings.subId}`;
-           }
-        } else {
-           // Standard shopee.vn link (long form) -> Convert to Universal Link
-           const path = urlObj.pathname;
-           // Universal Link base
-           const baseUniversal = 'https://shopee.vn/universal-link';
-           
-           // Construct new params
-           const params = new URLSearchParams();
-           params.append('utm_source', settings.affiliateId);
-           if (settings.subId) params.append('utm_content', settings.subId);
-           params.append('deep_and_deferred', '1');
-           
-           affiliateUrl = `${baseUniversal}${path}?${params.toString()}`;
-        }
-      } catch (e) {
-        // Fallback simple append
-        const separator = urlInput.includes('?') ? '&' : '?';
-        affiliateUrl = `${urlInput}${separator}utm_source=${settings.affiliateId}`;
+        affiliateUrl = `https://shopee.vn/universal-link${path}?${params.toString()}`;
       }
-    } else {
-      // Simple UTM Append for everything if Universal Link is disabled
-      const separator = urlInput.includes('?') ? '&' : '?';
-      let suffix = `utm_source=${settings.affiliateId}`;
-      if (settings.subId) suffix += `&utm_content=${settings.subId}`;
-      affiliateUrl = `${urlInput}${separator}${suffix}`;
+
+      const newResult: ConvertedLink = {
+        originalUrl: input,
+        affiliateUrl: affiliateUrl,
+        timestamp: Date.now(),
+        productName: extractProductName(input),
+      };
+
+      setCurrentResult(newResult);
+      setUrlInput(''); // Clear input for next use
+    } catch (e) {
+      setError('Có lỗi xảy ra khi xử lý link. Vui lòng thử lại.');
     }
-
-    const newResult: ConvertedLink = {
-      originalUrl: urlInput,
-      affiliateUrl: affiliateUrl,
-      timestamp: Date.now(),
-      productName: extractProductName(urlInput),
-    };
-
-    setCurrentResult(newResult);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-br from-shopee to-shopee-dark z-0"></div>
+    <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 pb-20">
+      {/* Dynamic Header Background */}
+      <div className="absolute top-0 left-0 w-full h-80 bg-gradient-to-br from-[#ee4d2d] to-[#ff7337] z-0 rounded-b-[3rem] shadow-lg"></div>
 
-      <div className="relative z-10 container mx-auto px-4 pt-8 max-w-3xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8 text-white">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-sm">
-              <ShoppingBag className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Mua gì cùng Bean</h1>
-              <p className="text-white/80 text-sm">Luôn sẵn sàng đồng hành mua sắm cùng bạn</p>
-            </div>
+      <div className="relative z-10 container mx-auto px-4 pt-10 max-w-xl">
+        {/* Logo & Title */}
+        <div className="text-center mb-10 text-white">
+          <div className="inline-flex bg-white/20 p-4 rounded-3xl backdrop-blur-md mb-4 shadow-inner">
+            <ShoppingBag className="w-10 h-10 text-white" />
           </div>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2">Mua gì cùng Bean</h1>
+          <p className="text-white/90 font-medium">Chuyển đổi link Affiliate Shopee</p>
         </div>
 
         {/* Input Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
-          <label className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
-            Dán link Shopee cần chuyển đổi
-          </label>
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 mb-8 border border-white/50">
+          <div className="flex items-center justify-between mb-4">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+              Dán link sản phẩm vào đây
+            </label>
+            <div className="group relative">
+              <Info className="w-4 h-4 text-gray-300 cursor-help" />
+              <div className="absolute bottom-full right-0 mb-2 w-56 bg-gray-800 text-white text-[10px] p-2 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none shadow-xl z-20">
+                Sử dụng link gốc (link dài) để đạt hiệu quả tốt nhất.
+              </div>
+            </div>
+          </div>
+
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">
               <LinkIcon className="w-5 h-5" />
             </div>
             <input
@@ -163,31 +133,42 @@ function App() {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="https://shopee.vn/..."
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shopee focus:border-transparent outline-none transition text-base"
+              className="w-full pl-14 pr-4 py-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:ring-4 focus:ring-shopee/10 focus:border-shopee focus:bg-white outline-none transition-all text-base font-medium"
               onKeyDown={(e) => e.key === 'Enter' && convertLink()}
             />
           </div>
           
-          {error && <p className="text-red-500 text-sm mt-2 ml-1 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>{error}</p>}
+          {error && (
+            <div className="flex items-center gap-2 text-red-500 text-sm mt-3 font-medium animate-pulse">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+              {error}
+            </div>
+          )}
 
           <button
             onClick={convertLink}
-            className="w-full mt-4 bg-gradient-to-r from-shopee to-shopee-dark hover:from-shopee-light hover:to-shopee text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-200 transition transform active:scale-[0.99] flex justify-center items-center gap-2"
+            className="w-full mt-6 bg-gradient-to-r from-shopee to-[#ff7337] hover:brightness-105 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-orange-100 transition-all transform active:scale-[0.98] flex justify-center items-center gap-3"
           >
-            <Zap className="w-5 h-5" fill="currentColor" />
-            Chuyển Đổi Ngay
+            <Zap className="w-6 h-6 fill-white" />
+            TẠO LINK RÚT GỌN
           </button>
         </div>
 
-        {/* Result Area */}
+        {/* Result Area - Only shows the most recent conversion */}
         {currentResult && (
-          <div className="mb-10">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-2 mb-4 ml-4">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Link đã chuyển đổi</h2>
+            </div>
             <ResultCard result={currentResult} />
           </div>
         )}
 
-        <div className="mt-12 text-center">
-            <p className="text-gray-400 text-sm">Powered by React ✦ Tailwind</p>
+        <div className="mt-16 text-center">
+            <div className="inline-block p-1 px-3 bg-gray-100 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Mua gì cùng Bean ✦ v2.2
+            </div>
         </div>
       </div>
     </div>
