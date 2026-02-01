@@ -70,18 +70,18 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
-      <div className="p-8">
-        <div className="flex flex-col gap-5">
-          {/* Main Short Link Display */}
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="p-3 sm:p-4">
+        <div className="flex flex-col gap-2">
+          {/* Super Compact Display */}
           <div className="relative">
             <input
               readOnly
-              value={isShortening ? 'Đang tạo link rút gọn...' : displayUrl}
-              className={`w-full bg-gray-50 border-2 rounded-2xl px-6 py-5 pr-14 font-mono text-base font-bold focus:outline-none transition-all ${
+              value={isShortening ? 'Đang xử lý...' : displayUrl}
+              className={`w-full bg-gray-50 border-2 rounded-xl px-4 py-2.5 pr-10 font-mono text-xs font-bold focus:outline-none transition-all ${
                 isShortening 
-                  ? 'text-gray-400 border-gray-100 italic' 
-                  : 'text-shopee border-shopee/10 bg-shopee/[0.02]'
+                  ? 'text-gray-400 border-gray-50 italic' 
+                  : 'text-shopee border-shopee/5 bg-shopee/[0.02]'
               }`}
             />
             {!isShortening && displayUrl && (
@@ -89,44 +89,43 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
                 href={displayUrl} 
                 target="_blank" 
                 rel="noreferrer"
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-shopee p-1.5 rounded-xl hover:bg-shopee/10 transition-colors"
-                title="Mở link thử"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-shopee p-1 rounded-lg hover:bg-shopee/10 transition-colors"
               >
-                <ExternalLink className="w-5 h-5" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Compressed Action Buttons */}
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleCopy}
               disabled={isShortening}
-              className={`px-6 py-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${
+              className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all duration-300 ${
                 copied 
-                  ? 'bg-green-500 text-white shadow-green-100' 
+                  ? 'bg-green-500 text-white' 
                   : isShortening
-                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
-                    : 'bg-shopee text-white hover:shadow-orange-200 hover:brightness-105'
+                    ? 'bg-gray-100 text-gray-300'
+                    : 'bg-shopee text-white active:scale-95'
               }`}
             >
               {isShortening ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
+                <RefreshCw className="w-3 h-3 animate-spin" />
               ) : copied ? (
-                <Check className="w-5 h-5" />
+                <Check className="w-3 h-3" />
               ) : (
-                <Copy className="w-5 h-5" />
+                <Copy className="w-3 h-3" />
               )}
-              {copied ? 'ĐÃ COPY' : 'COPY LINK'}
+              {copied ? 'Xong' : 'Copy'}
             </button>
 
             <button
               onClick={handleShare}
               disabled={isShortening}
-              className="px-6 py-5 bg-gray-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md shadow-gray-200 disabled:opacity-50"
+              className="py-3 bg-gray-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
             >
-              <Share2 className="w-5 h-5" />
-              CHIA SẺ
+              <Share2 className="w-3 h-3" />
+              Chia sẻ
             </button>
           </div>
         </div>
