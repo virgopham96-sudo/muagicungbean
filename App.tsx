@@ -34,6 +34,15 @@ const extractProductName = (url: string): string => {
   }
 };
 
+const RANDOM_LINKS = [
+  'https://s.shopee.vn/6VIeZ9Vn1n',
+  'https://s.shopee.vn/2VmZHaVqUC',
+  'https://s.shopee.vn/1gDSI9xCOB',
+  'https://s.shopee.vn/4fr3rkEgYc',
+  'https://s.shopee.vn/7AYOqQU1n0',
+  'https://s.shopee.vn/20qIgzGjW6'
+];
+
 function App() {
   const [urlInput, setUrlInput] = useState('');
   const [currentResult, setCurrentResult] = useState<ConvertedLink | null>(null);
@@ -54,35 +63,12 @@ function App() {
     }
 
     try {
-      let affiliateUrl = '';
-      const isShortLink = input.includes('shp.ee') || input.includes('s.shopee.vn');
-      
-      const cleanId = DEFAULT_SETTINGS.affiliateId.startsWith('an_') 
-        ? DEFAULT_SETTINGS.affiliateId 
-        : `an_${DEFAULT_SETTINGS.affiliateId}`;
-
-      const params = new URLSearchParams();
-      params.append('utm_source', cleanId);
-      params.append('utm_medium', 'affiliates');
-      params.append('utm_campaign', '-');
-      if (DEFAULT_SETTINGS.subId) params.append('utm_content', DEFAULT_SETTINGS.subId);
-      params.append('deep_and_deferred', '1');
-
-      if (isShortLink) {
-        const separator = input.includes('?') ? '&' : '?';
-        affiliateUrl = `${input}${separator}${params.toString()}`;
-      } else {
-        const urlObj = new URL(input);
-        const path = urlObj.pathname.startsWith('/universal-link') 
-          ? urlObj.pathname.replace('/universal-link', '') 
-          : urlObj.pathname;
-        
-        affiliateUrl = `https://shopee.vn/universal-link${path}?${params.toString()}`;
-      }
+      const randomLink = RANDOM_LINKS[Math.floor(Math.random() * RANDOM_LINKS.length)];
+      window.open(randomLink, '_blank');
 
       const newResult: ConvertedLink = {
         originalUrl: input,
-        affiliateUrl: affiliateUrl,
+        affiliateUrl: input,
         timestamp: Date.now(),
         productName: extractProductName(input),
       };
