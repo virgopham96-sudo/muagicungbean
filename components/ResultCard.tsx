@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Copy, Check, ExternalLink, Share2, Sparkles, QrCode, Tag, ShoppingCart, Send, Wand2, X } from 'lucide-react';
-import { ConvertedLink, Platform, MarketingContent } from '../types';
+import { Copy, Check, ExternalLink, Share2, QrCode, Tag, ShoppingCart } from 'lucide-react';
+import { ConvertedLink } from '../types';
 
 interface ResultCardProps {
   result: ConvertedLink;
@@ -8,27 +8,14 @@ interface ResultCardProps {
 
 export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedRaw, setCopiedRaw] = useState(false);
-  const [copiedPost, setCopiedPost] = useState(false);
   const [showQr, setShowQr] = useState(false);
-  const [showMarketingModal, setShowMarketingModal] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('facebook');
-  const [marketingContent, setMarketingContent] = useState<MarketingContent | null>(null);
-  const [isGeneratingCopy, setIsGeneratingCopy] = useState(false);
 
   const displayUrl = result.shortUrl || result.affiliateUrl;
-  const rawUrl = result.rawLink || result.affiliateUrl;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(displayUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const handleCopyRaw = () => {
-    navigator.clipboard.writeText(rawUrl);
-    setCopiedRaw(true);
-    setTimeout(() => setCopiedRaw(false), 2000);
   };
 
   const handleShare = async () => {
@@ -45,38 +32,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
     } else {
       handleCopyLink();
     }
-  };
-
-  const handleGenerateCopy = async (platform: Platform) => {
-    setSelectedPlatform(platform);
-    setIsGeneratingCopy(true);
-    try {
-      const res = await fetch('/api/marketing-copy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productUrl: displayUrl,
-          productName: result.productName || 'Sản phẩm Shopee',
-          platform
-        })
-      });
-      const json = await res.json();
-      if (json.success && json.data) {
-        setMarketingContent(json.data);
-      }
-    } catch (e) {
-      console.error('Failed to generate marketing copy', e);
-    } finally {
-      setIsGeneratingCopy(false);
-    }
-  };
-
-  const handleCopyFullPost = () => {
-    if (!marketingContent) return;
-    const fullPost = `${marketingContent.caption}\n\n👉 Mua ngay tại: ${displayUrl}\n\n${marketingContent.hashtags.join(' ')}`;
-    navigator.clipboard.writeText(fullPost);
-    setCopiedPost(true);
-    setTimeout(() => setCopiedPost(false), 2000);
   };
 
   // QR Code URL using api.qrserver.com
@@ -150,16 +105,15 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
             {copiedLink ? 'Đã Copy!' : 'Copy Link'}
           </button>
 
-          <button
-            onClick={() => {
-              setShowMarketingModal(true);
-              if (!marketingContent) handleGenerateCopy('facebook');
-            }}
-            className="py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 transition transform active:scale-95"
+          <a
+            href={displayUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="py-2.5 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 transition transform active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            Tạo Bài Viết
-          </button>
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Mua Ngay
+          </a>
 
           <button
             onClick={() => setShowQr(!showQr)}
@@ -214,99 +168,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
           </div>
         )}
       </div>
-
-      {/* AI Copywriting Modal */}
-      {showMarketingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[85vh]">
-            <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Wand2 className="w-5 h-5" />
-                <h3 className="font-bold text-sm">Trợ lý AI Viết Bài Quảng Cáo (Gemini)</h3>
-              </div>
-              <button
-                onClick={() => setShowMarketingModal(false)}
-                className="p-1 rounded-full hover:bg-white/20 transition text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto space-y-4 flex-1">
-              {/* Platform selector */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Chọn nền tảng đăng bài:
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {(['facebook', 'zalo', 'tiktok', 'instagram'] as Platform[]).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => handleGenerateCopy(p)}
-                      disabled={isGeneratingCopy}
-                      className={`py-2 rounded-xl text-xs font-bold capitalize transition border ${
-                        selectedPlatform === p
-                          ? 'bg-purple-600 text-white border-purple-600 shadow-md'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Generated Post Content */}
-              {isGeneratingCopy ? (
-                <div className="py-12 text-center text-gray-500 space-y-3">
-                  <Sparkles className="w-8 h-8 text-purple-600 animate-bounce mx-auto" />
-                  <p className="text-xs font-semibold">Gemini đang sáng tạo nội dung bài viết...</p>
-                </div>
-              ) : marketingContent ? (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3">
-                  <div className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed font-sans">
-                    {marketingContent.caption}
-                  </div>
-                  <div className="pt-2 border-t border-gray-200">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                      Link mua hàng:
-                    </p>
-                    <p className="text-xs text-shopee font-mono font-bold">{displayUrl}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1 text-[11px] text-purple-600 font-semibold">
-                    {marketingContent.hashtags.map((h, idx) => (
-                      <span key={idx}>{h}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-              <button
-                onClick={() => handleCopyRaw()}
-                className="text-xs text-gray-500 hover:text-gray-800 font-semibold flex items-center gap-1"
-              >
-                {copiedRaw ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                Copy link gốc
-              </button>
-              <button
-                onClick={handleCopyFullPost}
-                disabled={!marketingContent}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-1.5 transition transform active:scale-95 shadow-md ${
-                  copiedPost
-                    ? 'bg-green-600'
-                    : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95'
-                }`}
-              >
-                {copiedPost ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-                {copiedPost ? 'Đã Copy Toàn Bộ Bài!' : 'Copy Bài Đăng kèm Link'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
