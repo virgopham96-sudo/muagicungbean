@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link as LinkIcon, ShoppingBag, Zap, Settings, History, Trash2, ArrowRight, RefreshCw, Check, Info, Sparkles, AlertCircle } from 'lucide-react';
+import { Link as LinkIcon, ShoppingBag, Zap, History, Trash2, RefreshCw, Info, AlertCircle } from 'lucide-react';
 import { ResultCard } from './components/ResultCard';
-import { SettingsModal } from './components/SettingsModal';
 import { UserSettings, ConvertedLink } from './types';
 import { convertShopeeUrl } from './services/shortenerService';
 
@@ -34,7 +33,6 @@ function App() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'convert' | 'history'>('convert');
 
   useEffect(() => {
@@ -103,14 +101,6 @@ function App() {
               </span>
             </div>
           </div>
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2.5 bg-white/15 hover:bg-white/25 rounded-xl backdrop-blur-md transition text-white"
-            title="Cấu hình API"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Navigation Tabs */}
@@ -242,14 +232,6 @@ function App() {
 
 
       </div>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        onSave={(newSettings) => setSettings(newSettings)}
-      />
     </div>
   );
 }

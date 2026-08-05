@@ -34,6 +34,28 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
     }
   };
 
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const targetUrl = result.shortUrl || result.affiliateUrl || result.rawLink;
+    if (!targetUrl) return;
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+          return;
+        }
+      } catch (err) {
+        // Fallback for cross-origin frame restriction
+      }
+      window.location.href = targetUrl;
+    } else {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   // QR Code URL using api.qrserver.com
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(displayUrl)}`;
 
@@ -107,9 +129,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result }) => {
 
           <a
             href={displayUrl}
+            onClick={handleBuyNow}
             target="_blank"
             rel="noreferrer"
-            className="py-2.5 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 transition transform active:scale-95"
+            className="py-2.5 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm hover:opacity-95 transition transform active:scale-95 cursor-pointer"
           >
             <ShoppingCart className="w-3.5 h-3.5" />
             Mua Ngay
