@@ -5,8 +5,8 @@ import { UserSettings, ConvertedLink } from './types';
 import { convertShopeeUrl } from './services/shortenerService';
 
 const DEFAULT_SETTINGS: UserSettings = {
-  apiKey: 'afp_live_76815641dfd20657de287c40ccad2b9bcf785b24569ebc2d04fc6e0dae1fc7aa',
-  toolId: 'cmsfs1mwt03lc01qyh2i7p0sq',
+  apiKey: 'afp_live_a2928dda5f5d6d5f99cc20102a4a65398d271cffee83f0909a52ce1e27fddca4',
+  toolId: 'cmtv6oi9t00hj01t99lyqgrd7',
   affiliateId: '17362210029',
   subId: 'WebTool',
   universalLinkEnabled: true,
@@ -16,7 +16,12 @@ function App() {
   const [settings, setSettings] = useState<UserSettings>(() => {
     const saved = localStorage.getItem('affipad_settings');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.apiKey === 'afp_live_a2928dda5f5d6d5f99cc20102a4a65398d271cffee83f0909a52ce1e27fddca4') {
+          return parsed;
+        }
+      } catch (e) { }
     }
     return DEFAULT_SETTINGS;
   });

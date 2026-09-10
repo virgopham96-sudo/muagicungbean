@@ -1,5 +1,6 @@
 {
   "name": "Mua gì cùng Bean",
   "description": "Luôn sẵn sàng đồng hành mua sắm cùng bạn",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

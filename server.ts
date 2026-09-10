@@ -3,10 +3,14 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 
-const DEFAULT_AFFIPAD_KEY = process.env.AFFIPAD_API_KEY || 'afp_live_76815641dfd20657de287c40ccad2b9bcf785b24569ebc2d04fc6e0dae1fc7aa';
+const OLD_AFFIPAD_KEY = 'afp_live_76815641dfd20657de287c40ccad2b9bcf785b24569ebc2d04fc6e0dae1fc7aa';
+const ACTIVE_AFFIPAD_KEY = 'afp_live_a2928dda5f5d6d5f99cc20102a4a65398d271cffee83f0909a52ce1e27fddca4';
+const envKey = process.env.AFFIPAD_API_KEY;
+const DEFAULT_AFFIPAD_KEY = (envKey && envKey !== OLD_AFFIPAD_KEY) ? envKey : ACTIVE_AFFIPAD_KEY;
+const OLD_TOOL_ID = 'cmsfs1mwt03lc01qyh2i7p0sq';
 
-// Cache fetched default toolId in memory
-let cachedToolId: string | null = 'cmsfs1mwt03lc01qyh2i7p0sq';
+// Default toolId for the new key (cmtv6oi9t00hj01t99lyqgrd7)
+let cachedToolId: string | null = 'cmtv6oi9t00hj01t99lyqgrd7';
 
 async function startServer() {
   const app = express();
@@ -46,14 +50,17 @@ async function startServer() {
   app.post('/api/convert', async (req, res) => {
     try {
       const { url, apiKey, toolId, subId, subIds } = req.body;
-      const targetApiKey = apiKey || DEFAULT_AFFIPAD_KEY;
+      let targetApiKey = apiKey || DEFAULT_AFFIPAD_KEY;
+      if (targetApiKey === OLD_AFFIPAD_KEY) {
+        targetApiKey = DEFAULT_AFFIPAD_KEY;
+      }
 
       if (!url || typeof url !== 'string') {
         return res.status(400).json({ success: false, error: 'Vui lòng cung cấp URL sản phẩm Shopee hợp lệ' });
       }
 
       let activeToolId = toolId;
-      if (!activeToolId) {
+      if (!activeToolId || activeToolId === OLD_TOOL_ID) {
         if (cachedToolId && targetApiKey === DEFAULT_AFFIPAD_KEY) {
           activeToolId = cachedToolId;
         } else {
@@ -70,17 +77,28 @@ async function startServer() {
         }
       }
 
-      const payload: any = {
-        toolId: activeToolId,
-        url: url.trim()
-      };
-
-      if (subId) {
-        payload.subId = subId;
-      }
+      // Documentation from https://docs.affipad.com/api:
+      // url: string (required)
+      // toolId: string (required)
+      // useCache: boolean (optional, default true)
+      // useShortLink: boolean (optional, default true)
+      // subIds: string[] (optional, max 5, alphanumeric only)
+      let targetSubIds: string[] = [];
       if (Array.isArray(subIds) && subIds.length > 0) {
-        payload.subIds = subIds;
+        targetSubIds = subIds.map((s: any) => String(s).trim()).filter(Boolean);
+      } else if (subId && typeof subId === 'string' && subId.trim()) {
+        targetSubIds = [subId.trim()];
+      } else {
+        targetSubIds = ['WebTool'];
       }
+
+      const payload: any = {
+        url: url.trim(),
+        toolId: activeToolId,
+        useCache: true,
+        useShortLink: true,
+        subIds: targetSubIds.slice(0, 5)
+      };
 
       console.log(`[Affipad API] Converting link via toolId=${activeToolId}:`, url);
 

@@ -173,7 +173,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 name="toolId"
                 value={formData.toolId || ''}
                 onChange={handleChange}
-                placeholder="cmsfs1mwt03lc01qyh2i7p0sq"
+                placeholder="cmtv6oi9t00hj01t99lyqgrd7"
                 className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs text-gray-900 focus:ring-2 focus:ring-shopee/20 focus:border-shopee outline-none transition"
               />
             )}
